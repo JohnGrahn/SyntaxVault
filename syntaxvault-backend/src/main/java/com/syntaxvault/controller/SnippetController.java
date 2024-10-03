@@ -1,19 +1,19 @@
 package com.syntaxvault.controller;
 
-import com.syntaxvault.model.Snippet;
-import com.syntaxvault.service.SnippetService;
+import com.syntaxvault.dto.SnippetDTO;
 import com.syntaxvault.dto.SnippetRequest;
 import com.syntaxvault.model.User;
+import com.syntaxvault.service.SnippetService;
+import com.syntaxvault.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-//import java.util.Set;
-import java.time.LocalDateTime;
-import com.syntaxvault.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import com.syntaxvault.mapper.SnippetMapper;
 import java.util.Set;
 
 @RestController
@@ -26,41 +26,44 @@ public class SnippetController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private SnippetMapper snippetMapper;
+
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<Snippet> createSnippet(@RequestBody SnippetRequest snippetRequest, Authentication authentication) {
+    public ResponseEntity<SnippetDTO> createSnippet(@RequestBody SnippetRequest snippetRequest, Authentication authentication) {
         String username = authentication.getName();
         User user = userService.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        Snippet createdSnippet = snippetService.createSnippet(snippetRequest, user);
-        return ResponseEntity.ok(createdSnippet);
+        SnippetDTO createdSnippetDTO = snippetService.createSnippet(snippetRequest, user);
+        return ResponseEntity.ok(createdSnippetDTO);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<Snippet> getSnippetById(@PathVariable Long id){
-        Optional<Snippet> snippet = snippetService.getSnippetById(id);
-        return snippet.map(ResponseEntity::ok)
-                      .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<SnippetDTO> getSnippetById(@PathVariable Long id){
+        Optional<SnippetDTO> snippetDTOOpt = snippetService.getSnippetByIdDTO(id);
+        return snippetDTOOpt.map(ResponseEntity::ok)
+                            .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<Snippet>> getAllSnippets(){
-        List<Snippet> snippets = snippetService.getAllSnippets();
-        return ResponseEntity.ok(snippets);
+    public ResponseEntity<List<SnippetDTO>> getAllSnippets(){
+        List<SnippetDTO> snippetDTOs = snippetService.getAllSnippetsDTO();
+        return ResponseEntity.ok(snippetDTOs);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<Snippet> updateSnippet(@PathVariable Long id, @RequestBody SnippetRequest snippetRequest, Authentication authentication) {
+    public ResponseEntity<SnippetDTO> updateSnippet(@PathVariable Long id, @RequestBody SnippetRequest snippetRequest, Authentication authentication) {
         String username = authentication.getName();
         User user = userService.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        Snippet updatedSnippet = snippetService.updateSnippet(id, snippetRequest, user);
-        return ResponseEntity.ok(updatedSnippet);
+        SnippetDTO updatedSnippetDTO = snippetService.updateSnippet(id, snippetRequest, user);
+        return ResponseEntity.ok(updatedSnippetDTO);
     }
 
     @DeleteMapping("/{id}")
@@ -72,24 +75,29 @@ public class SnippetController {
 
     @GetMapping("/search")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<Snippet>> searchSnippets(
+    public ResponseEntity<List<SnippetDTO>> searchSnippets(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String language,
             @RequestParam(required = false) Set<String> tags) {
-        List<Snippet> snippets = snippetService.searchSnippets(keyword, language, tags);
-        return ResponseEntity.ok(snippets);
+        List<SnippetDTO> snippetDTOs = snippetService.searchSnippets(keyword, language, tags)
+                                                     .stream()
+                                                     .map(snippetMapper::toDTO)
+                                                     .collect(Collectors.toList());
+        return ResponseEntity.ok(snippetDTOs);
     }
 
     @GetMapping("/user")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<Snippet>> getUserSnippets(Authentication authentication) {
+    public ResponseEntity<List<SnippetDTO>> getUserSnippets(Authentication authentication) {
         String username = authentication.getName();
         User user = userService.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        List<Snippet> snippets = snippetService.getSnippetsByUser(user);
-        return ResponseEntity.ok(snippets);
+        List<SnippetDTO> snippetDTOs = snippetService.getSnippetsByUserDTO(user);
+        return ResponseEntity.ok(snippetDTOs);
     }
 
     // Additional endpoints (e.g., search) can be added here
+
+    // Utility method to convert Collection to CollectionDTO can be added here if needed
 }

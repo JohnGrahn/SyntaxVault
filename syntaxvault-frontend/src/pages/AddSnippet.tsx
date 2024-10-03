@@ -3,11 +3,15 @@ import React, { useState, FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { addSnippet } from '../features/snippets/snippetsSlice';
 import { useNavigate } from 'react-router-dom';
+import { RootState } from '../app/store';
+
+const selectUsername = (state: RootState) => state.auth.user;
 
 const AddSnippet: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading, error } = useAppSelector((state) => state.snippets);
+  const username = useAppSelector(selectUsername);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -24,6 +28,7 @@ const AddSnippet: React.FC = () => {
       content,
       language,
       tags: tags.split(',').map(tag => tag.trim()),
+      username: username || 'Anonymous',
     };
 
     try {

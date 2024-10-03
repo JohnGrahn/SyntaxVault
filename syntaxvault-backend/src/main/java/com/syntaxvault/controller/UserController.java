@@ -1,5 +1,6 @@
 package com.syntaxvault.controller;
 
+import com.syntaxvault.dto.UserDTO;
 import com.syntaxvault.model.User;
 import com.syntaxvault.service.UserService;
 import com.syntaxvault.dto.LoginRequest;
@@ -27,8 +28,20 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // Utility method to convert User to UserDTO
+    private UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setRoles(user.getRoles());
+        return dto;
+    }
+
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest){
+    public ResponseEntity<UserDTO> registerUser(@Valid @RequestBody RegisterRequest registerRequest){
         // Create a new User entity
         User user = new User();
         user.setUsername(registerRequest.getUsername());
@@ -36,22 +49,22 @@ public class UserController {
         user.setPasswordHash(registerRequest.getPassword());
         // Register user
         User savedUser = userService.registerUser(user);
-        return ResponseEntity.ok(savedUser);
+        UserDTO userDTO = convertToDTO(savedUser);
+        return ResponseEntity.ok(userDTO);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest loginRequest){
-        Optional<User> userOptional = userService.findByUsername(loginRequest.getUsername());
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            if (passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-                String token = jwtUtil.generateToken(user.getUsername());
-                return ResponseEntity.ok(new JwtResponse(token));
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-            }
+    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest loginRequest) {
+        User user = userService.findByUsername(loginRequest.getUsername())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
+            String token = jwtUtil.generateToken(user.getUsername());
+            UserDTO userDTO = convertToDTO(user);
+            JwtResponse response = new JwtResponse(token, userDTO);
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 

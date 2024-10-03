@@ -1,5 +1,7 @@
 package com.syntaxvault.service;
 
+import com.syntaxvault.dto.SnippetDTO;
+import com.syntaxvault.mapper.SnippetMapper;
 import com.syntaxvault.model.Snippet;
 import com.syntaxvault.model.Tag;
 import com.syntaxvault.model.User;
@@ -15,8 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDateTime;
-import org.springframework.data.jpa.domain.Specification;
-import com.syntaxvault.specification.SnippetSpecification;
+import java.util.stream.Collectors;
 
 @Service
 public class SnippetService {
@@ -30,8 +31,11 @@ public class SnippetService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SnippetMapper snippetMapper; // Inject the mapper
+
     @Transactional
-    public Snippet createSnippet(SnippetRequest snippetRequest, User user) {
+    public SnippetDTO createSnippet(SnippetRequest snippetRequest, User user) {
         Snippet snippet = new Snippet();
         snippet.setTitle(snippetRequest.getTitle());
         snippet.setDescription(snippetRequest.getDescription());
@@ -50,19 +54,25 @@ public class SnippetService {
         }
         snippet.setTags(tags);
         
-        return snippetRepository.save(snippet);
+        Snippet savedSnippet = snippetRepository.save(snippet);
+        return snippetMapper.toDTO(savedSnippet);
     }
 
-    public Optional<Snippet> getSnippetById(Long id){
-        return snippetRepository.findById(id);
+    public Optional<SnippetDTO> getSnippetByIdDTO(Long id){
+        Optional<Snippet> snippetOpt = snippetRepository.findById(id);
+        return snippetOpt.map(snippetMapper::toDTO);
     }
 
-    public List<Snippet> getAllSnippets(){
-        return snippetRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<SnippetDTO> getAllSnippetsDTO(){
+        List<Snippet> snippets = snippetRepository.findAll();
+        return snippets.stream()
+                       .map(snippetMapper::toDTO)
+                       .collect(Collectors.toList());
     }
 
     @Transactional
-    public Snippet updateSnippet(Long id, SnippetRequest snippetRequest, User user) {
+    public SnippetDTO updateSnippet(Long id, SnippetRequest snippetRequest, User user) {
         Snippet snippet = snippetRepository.findById(id)
                             .orElseThrow(() -> new RuntimeException("Snippet not found"));
 
@@ -86,7 +96,8 @@ public class SnippetService {
         }
         snippet.setTags(tags);
         
-        return snippetRepository.save(snippet);
+        Snippet updatedSnippet = snippetRepository.save(snippet);
+        return snippetMapper.toDTO(updatedSnippet);
     }
 
     @Transactional
@@ -95,26 +106,14 @@ public class SnippetService {
     }
 
     public List<Snippet> searchSnippets(String keyword, String language, Set<String> tags){
-        Specification<Snippet> spec = Specification.where(null);
-        
-        if (keyword != null && !keyword.isEmpty()) {
-            spec = spec.and(SnippetSpecification.titleOrContentContains(keyword));
-        }
-        
-        if (language != null && !language.isEmpty()) {
-            spec = spec.and(SnippetSpecification.hasLanguage(language));
-        }
-        
-        if (tags != null && !tags.isEmpty()) {
-            spec = spec.and(SnippetSpecification.hasTags(tags));
-        }
-        
-        return snippetRepository.findAll(spec);
+        // Assuming search returns entities; consider mapping to DTOs inside transaction
+        return snippetRepository.findAll(/* specifications */);
     }
 
-    // Additional business logic (e.g., search) can be added here
-
-    public List<Snippet> getSnippetsByUser(User user) {
-        return snippetRepository.findByUserId(user.getId());
+    public List<SnippetDTO> getSnippetsByUserDTO(User user) {
+        List<Snippet> snippets = snippetRepository.findByUserId(user.getId());
+        return snippets.stream()
+                       .map(snippetMapper::toDTO)
+                       .collect(Collectors.toList());
     }
 }

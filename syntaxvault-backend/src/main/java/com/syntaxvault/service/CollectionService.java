@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.syntaxvault.dto.CollectionDTO;
+import com.syntaxvault.mapper.CollectionMapper;
 
 @Service
 public class CollectionService {
@@ -27,9 +29,12 @@ public class CollectionService {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private CollectionMapper collectionMapper; // Assume you have a mapper
 
     @Transactional
-    public Collection createCollection(CollectionRequest collectionRequest) {
+    public CollectionDTO createCollection(CollectionRequest collectionRequest) {
         // Retrieve the authenticated user
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
@@ -47,20 +52,26 @@ public class CollectionService {
             collection.setSnippets(snippets);
         }
 
-        return collectionRepository.save(collection);
+        Collection savedCollection = collectionRepository.save(collection);
+        return collectionMapper.toDTO(savedCollection);
     }
 
-    public Optional<Collection> getCollectionById(Long id){
-        return collectionRepository.findById(id);
+    public Optional<CollectionDTO> getCollectionByIdDTO(Long id){
+        Optional<Collection> collectionOpt = Optional.ofNullable(collectionRepository.findByIdWithUserAndSnippets(id));
+        return collectionOpt.map(collectionMapper::toDTO);
     }
 
-    public List<Collection> getAllCollections(){
+    @Transactional(readOnly = true)
+    public List<CollectionDTO> getAllCollectionsDTO(){
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return collectionRepository.findByUserUsername(username);
+        List<Collection> collections = collectionRepository.findByUserUsername(username);
+        return collections.stream()
+                          .map(collectionMapper::toDTO)
+                          .collect(Collectors.toList());
     }
 
     @Transactional
-    public Collection updateCollection(Long id, CollectionRequest collectionRequest){
+    public CollectionDTO updateCollection(Long id, CollectionRequest collectionRequest){
         Collection collection = collectionRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Collection not found"));
 
@@ -75,11 +86,21 @@ public class CollectionService {
             collection.setSnippets(snippets);
         }
 
-        return collectionRepository.save(collection);
+        Collection updatedCollection = collectionRepository.save(collection);
+        return collectionMapper.toDTO(updatedCollection);
     }
 
     @Transactional
     public void deleteCollection(Long id){
         collectionRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public CollectionDTO getCollectionByIdWithUserAndSnippetsDTO(Long id) {
+        Collection collection = collectionRepository.findByIdWithUserAndSnippets(id);
+        if(collection == null){
+            return null;
+        }
+        return collectionMapper.toDTO(collection);
     }
 }

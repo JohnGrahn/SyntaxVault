@@ -8,9 +8,10 @@ interface Snippet {
   description: string;
   content: string;
   language: string;
+  creationDate: string;
+  lastModifiedDate: string;
+  username: string; // Owner's username
   tags: string[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface SnippetsState {
@@ -41,7 +42,7 @@ export const fetchSnippets = createAsyncThunk(
 // Add a new snippet
 export const addSnippet = createAsyncThunk(
   'snippets/addSnippet',
-  async (snippetData: Omit<Snippet, 'id' | 'createdAt' | 'updatedAt'>, thunkAPI) => {
+  async (snippetData: Omit<Snippet, 'id' | 'creationDate' | 'lastModifiedDate'>, thunkAPI) => {
     try {
       const response = await axios.post('/api/snippets', snippetData);
       return response.data as Snippet;
