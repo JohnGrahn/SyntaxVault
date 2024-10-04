@@ -4,10 +4,11 @@ import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
-import AddSnippet from './pages/AddSnippet';
 import NotFound from './pages/NotFound';
-import Header from './components/Layout/Header';
+import SnippetDetail from './components/Snippets/SnippetDetail';
+import SnippetForm from './components/Snippets/SnippetForm';
 import PrivateRoute from './utils/PrivateRoute';
+import Header from './components/Layout/Header';
 
 const App: React.FC = () => {
   return (
@@ -21,7 +22,10 @@ const App: React.FC = () => {
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/add-snippet" element={<AddSnippet />} />
+          {/* Use SnippetForm for adding snippets */}
+          <Route path="/dashboard/add-snippet" element={<SnippetForm />} />
+          <Route path="/dashboard/snippets/:id" element={<SnippetDetail />} />
+          <Route path="/dashboard/edit-snippet/:id" element={<SnippetForm />} />
           {/* Add more protected routes here */}
         </Route>
 
