@@ -76,8 +76,12 @@ public class SnippetService {
         Snippet snippet = snippetRepository.findById(id)
                             .orElseThrow(() -> new RuntimeException("Snippet not found"));
 
+        // Fetch the user with snippets collection initialized
+        User fullUser = userRepository.findByIdWithSnippets(user.getId())
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+
         // Check if the user is the owner of the snippet or an admin
-        if (!snippet.getUser().equals(user) && !user.getRoles().contains("ROLE_ADMIN")) {
+        if (!snippet.getUser().equals(fullUser) && !fullUser.getRoles().contains("ROLE_ADMIN")) {
             throw new RuntimeException("You don't have permission to update this snippet");
         }
 
