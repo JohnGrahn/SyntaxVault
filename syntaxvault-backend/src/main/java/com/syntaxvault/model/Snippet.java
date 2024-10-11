@@ -1,13 +1,17 @@
 package com.syntaxvault.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "Snippets")
 @NoArgsConstructor
@@ -38,6 +42,7 @@ public class Snippet {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
     @ManyToMany
@@ -46,5 +51,6 @@ public class Snippet {
         joinColumns = @JoinColumn(name = "snippet_id"),
         inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @JsonManagedReference
     private Set<Tag> tags;
 }

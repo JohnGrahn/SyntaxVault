@@ -5,10 +5,11 @@ import { fetchSnippets, deleteSnippet } from '../../features/snippets/snippetsSl
 import { Link } from 'react-router-dom';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism.css';
+import { Snippet, Tag } from '../../types/types';
 
 const SnippetList: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { snippets, loading, error } = useAppSelector((state) => state.snippets);
+  const { snippets: stateSnippets, loading, error } = useAppSelector((state) => state.snippets);
 
   useEffect(() => {
     dispatch(fetchSnippets());
@@ -16,7 +17,7 @@ const SnippetList: React.FC = () => {
 
   useEffect(() => {
     Prism.highlightAll();
-  }, [snippets]);
+  }, [stateSnippets]);
 
   const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this snippet?')) {
@@ -35,11 +36,11 @@ const SnippetList: React.FC = () => {
           Add Snippet
         </Link>
       </div>
-      {snippets.length === 0 ? (
+      {stateSnippets.length === 0 ? (
         <p>No snippets available. Add some!</p>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {snippets.map((snippet) => (
+          {stateSnippets.map((snippet) => (
             <div key={snippet.id} className="border rounded p-4 shadow">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl">{snippet.title}</h3>
@@ -61,8 +62,8 @@ const SnippetList: React.FC = () => {
               </pre>
               <div className="mt-2">
                 {snippet.tags.map((tag) => (
-                  <span key={tag} className="bg-gray-200 text-gray-700 px-2 py-1 mr-2 rounded">
-                    {tag}
+                  <span key={tag.id} className="bg-gray-200 text-gray-700 px-2 py-1 mr-2 rounded">
+                    {tag.name}
                   </span>
                 ))}
               </div>

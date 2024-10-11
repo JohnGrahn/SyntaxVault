@@ -1,18 +1,7 @@
 // src/features/snippets/snippetsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from '../../api/axiosInstance';
-
-interface Snippet {
-  id: number;
-  title: string;
-  description: string;
-  content: string;
-  language: string;
-  creationDate: string;
-  lastModifiedDate: string;
-  username: string; // Owner's username
-  tags: string[];
-}
+import { Tag, Snippet, SnippetInput, SnippetUpdateInput } from '../../types/types';
 
 interface SnippetsState {
   snippets: Snippet[];
@@ -42,7 +31,7 @@ export const fetchSnippets = createAsyncThunk(
 // Add a new snippet
 export const addSnippet = createAsyncThunk(
   'snippets/addSnippet',
-  async (snippetData: Omit<Snippet, 'id' | 'creationDate' | 'lastModifiedDate'>, thunkAPI) => {
+  async (snippetData: SnippetInput, thunkAPI) => {
     try {
       const response = await axios.post('/api/snippets', snippetData);
       return response.data as Snippet;
@@ -55,7 +44,7 @@ export const addSnippet = createAsyncThunk(
 // Update a snippet
 export const updateSnippet = createAsyncThunk(
   'snippets/updateSnippet',
-  async ({ id, snippetData }: { id: number; snippetData: Partial<Snippet> }, thunkAPI) => {
+  async ({ id, snippetData }: { id: number; snippetData: SnippetUpdateInput }, thunkAPI) => {
     try {
       const response = await axios.put(`/api/snippets/${id}`, snippetData);
       return response.data as Snippet;

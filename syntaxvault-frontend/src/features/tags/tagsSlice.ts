@@ -1,11 +1,7 @@
 // src/features/tags/tagsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from '../../api/axiosInstance';
-
-interface Tag {
-  id: number;
-  name: string;
-}
+import { Tag } from '../../types/types';
 
 interface TagsState {
   tags: Tag[];

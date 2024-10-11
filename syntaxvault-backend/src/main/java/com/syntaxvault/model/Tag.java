@@ -1,12 +1,15 @@
 package com.syntaxvault.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.util.Set;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "Tags")
 @NoArgsConstructor
@@ -21,6 +24,7 @@ public class Tag {
     private String name;
 
     @ManyToMany(mappedBy = "tags")
+    @JsonBackReference
     private Set<Snippet> snippets;
     
     public Tag(String name) {

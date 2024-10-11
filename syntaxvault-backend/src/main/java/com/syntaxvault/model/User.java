@@ -1,13 +1,16 @@
 package com.syntaxvault.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "Users")
 @NoArgsConstructor
@@ -39,5 +42,6 @@ public class User {
     private Set<String> roles;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Set<Snippet> snippets;
 }

@@ -14,5 +14,5 @@ public class SnippetDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastModifiedDate;
     private String username; // Owner's username
-    private Set<String> tags;
+    private Set<TagDTO> tags;
 }

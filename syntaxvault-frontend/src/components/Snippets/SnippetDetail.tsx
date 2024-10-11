@@ -39,8 +39,8 @@ const SnippetDetail: React.FC = () => {
       </pre>
       <div className="mt-4">
         {snippet.tags.map((tag) => (
-          <span key={tag} className="bg-gray-200 text-gray-700 px-2 py-1 mr-2 rounded">
-            {tag}
+          <span key={tag.id} className="bg-gray-200 text-gray-700 px-2 py-1 mr-2 rounded">
+            {tag.name}
           </span>
         ))}
       </div>
