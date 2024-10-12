@@ -2,7 +2,7 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { addSnippet, updateSnippet, fetchSnippets } from '../../features/snippets/snippetsSlice';
-import { fetchTags } from '../../features/tags/tagsSlice';
+import { fetchTags, createTag } from '../../features/tags/tagsSlice';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Tag } from '../../types/types';
 
@@ -30,6 +30,8 @@ const SnippetForm: React.FC = () => {
     tags: [],
   });
 
+  const [newTag, setNewTag] = useState<string>('');
+
   useEffect(() => {
     if (tags.length === 0) {
       dispatch(fetchTags());
@@ -47,7 +49,7 @@ const SnippetForm: React.FC = () => {
     }
   }, [dispatch, isEditing, existingSnippet, tags.length]);
 
-  const { title, description, content, language, tags: snippetTags } = formData;
+  const { title, description, content, language } = formData;
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -63,11 +65,38 @@ const SnippetForm: React.FC = () => {
     setFormData({ ...formData, tags: selectedTags });
   };
 
+  const handleAddTag = async () => {
+    const trimmedTag = newTag.trim();
+    if (trimmedTag === '') return;
+
+    // Check if tag already exists
+    const existing = tags.find((t) => t.name.toLowerCase() === trimmedTag.toLowerCase());
+    if (existing) {
+      // Tag exists, add to selected tags if not already added
+      if (!formData.tags.some((t) => t.id === existing.id)) {
+        setFormData({ ...formData, tags: [...formData.tags, existing] });
+      }
+    } else {
+      try {
+        const resultAction = await dispatch(createTag(trimmedTag));
+        if (createTag.fulfilled.match(resultAction)) {
+          const newTagFromBackend = resultAction.payload;
+          setFormData({ ...formData, tags: [...formData.tags, newTagFromBackend] });
+        } else {
+          console.error('Failed to create tag:', resultAction.payload);
+        }
+      } catch (err) {
+        console.error('Failed to create tag:', err);
+      }
+    }
+    setNewTag('');
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const snippetData = {
       ...formData,
-      tags: formData.tags.map(tag => tag.name), // Changed from tag.id to tag.name
+      tags: formData.tags.map(tag => tag.name), // Backend handles creation if id is 0
     };
     
     if (isEditing && id) {
@@ -152,6 +181,22 @@ const SnippetForm: React.FC = () => {
             ))}
           </select>
           <p className="text-sm text-gray-600 mt-1">Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
+          <div className="mt-2 flex">
+            <input
+              type="text"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder="Add new tag"
+              className="flex-grow px-3 py-2 border rounded-l"
+            />
+            <button
+              type="button"
+              onClick={handleAddTag}
+              className="bg-green-500 text-white px-4 py-2 rounded-r hover:bg-green-600"
+            >
+              Add Tag
+            </button>
+          </div>
         </div>
         <button
           type="submit"

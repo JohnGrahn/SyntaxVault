@@ -28,6 +28,19 @@ export const fetchTags = createAsyncThunk(
   }
 );
 
+// Create a new tag
+export const createTag = createAsyncThunk(
+  'tags/createTag',
+  async (tagName: string, thunkAPI) => {
+    try {
+      const response = await axios.post('/api/tags', { name: tagName });
+      return response.data as Tag;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const tagsSlice = createSlice({
   name: 'tags',
   initialState,
@@ -44,6 +57,20 @@ const tagsSlice = createSlice({
         state.tags = action.payload;
       })
       .addCase(fetchTags.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Create Tag
+      .addCase(createTag.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createTag.fulfilled, (state, action: PayloadAction<Tag>) => {
+        state.loading = false;
+        state.tags.push(action.payload);
+      })
+      .addCase(createTag.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload;
       });
