@@ -3,8 +3,7 @@ import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { fetchSnippets } from '../../features/snippets/snippetsSlice';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism.css';
+import Prism from '../../utils/prism';
 
 const SnippetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

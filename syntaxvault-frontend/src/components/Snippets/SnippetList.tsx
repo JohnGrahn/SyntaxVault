@@ -3,8 +3,7 @@ import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { fetchSnippets, deleteSnippet } from '../../features/snippets/snippetsSlice';
 import { Link } from 'react-router-dom';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism.css';
+import Prism from '../../utils/prism';
 import { Snippet, Tag } from '../../types/types';
 
 const SnippetList: React.FC = () => {
