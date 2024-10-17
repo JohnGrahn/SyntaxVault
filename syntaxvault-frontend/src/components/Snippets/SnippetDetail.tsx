@@ -45,10 +45,10 @@ const SnippetDetail: React.FC = () => {
       </div>
       <div className="mt-4">
         <span className="text-sm text-gray-500">
-          Created At: {new Date(snippet.createdAt).toLocaleString()}
+          Created At: {new Date(snippet.creationDate).toLocaleString()}
         </span>
         <span className="text-sm text-gray-500 ml-4">
-          Last Modified: {new Date(snippet.updatedAt).toLocaleString()}
+          Last Modified: {new Date(snippet.lastModifiedDate).toLocaleString()}
         </span>
       </div>
     </div>

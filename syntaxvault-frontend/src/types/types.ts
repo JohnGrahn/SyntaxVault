@@ -24,3 +24,20 @@ export interface Tag {
   }
   
   export interface SnippetUpdateInput extends Partial<SnippetInput> {}
+  
+  export interface Collection {
+    id: number;
+    name: string;
+    username: string; // Owner's username
+    snippetIds: number[];
+  }
+  
+  export interface CollectionRequest {
+    name: string;
+    snippetIds?: number[];
+  }
+  
+  export interface CollectionInput {
+    name: string;
+    snippetIds?: number[];
+  }

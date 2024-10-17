@@ -23,7 +23,10 @@ const Header: React.FC = () => {
         {user ? (
           <>
             <Link to="/dashboard" className="mr-4">
-              Dashboard
+              Home
+            </Link>
+            <Link to="/dashboard/collections" className="mr-4">
+              Collections
             </Link>
             <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">
               Logout

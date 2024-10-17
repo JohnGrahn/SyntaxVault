@@ -12,7 +12,9 @@ interface AuthState {
 
 const initialState: AuthState = {
   token: localStorage.getItem('token'),
-  user: localStorage.getItem('token') ? (jwtDecode<{ username: string }>(localStorage.getItem('token')!).username) : null,
+  user: localStorage.getItem('token') 
+    ? (jwtDecode<{ sub: string }>(localStorage.getItem('token')!).sub || null)
+    : null,
   loading: false,
   error: null,
 };
@@ -62,8 +64,10 @@ const authSlice = createSlice({
     builder.addCase(loginUser.fulfilled, (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.token = action.payload;
-      state.user = jwtDecode<{ username: string }>(action.payload).username;
+      const decodedToken = jwtDecode<{ sub: string }>(action.payload);
+      state.user = decodedToken.sub || null;
       localStorage.setItem('token', action.payload);
+      console.log('User logged in:', state.user);
     });
     builder.addCase(loginUser.rejected, (state, action: PayloadAction<any>) => {
       state.loading = false;

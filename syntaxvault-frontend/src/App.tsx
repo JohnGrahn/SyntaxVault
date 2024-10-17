@@ -9,6 +9,9 @@ import SnippetDetail from './components/Snippets/SnippetDetail';
 import SnippetForm from './components/Snippets/SnippetForm';
 import PrivateRoute from './utils/PrivateRoute';
 import Header from './components/Layout/Header';
+import CollectionList from './components/Collections/CollectionList';
+import CollectionForm from './components/Collections/CollectionForm';
+import CollectionDetail from './components/Collections/CollectionDetail';
 
 const App: React.FC = () => {
   return (
@@ -22,10 +25,18 @@ const App: React.FC = () => {
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          {/* Use SnippetForm for adding snippets */}
+          
+          {/* Snippets Routes */}
           <Route path="/dashboard/add-snippet" element={<SnippetForm />} />
           <Route path="/dashboard/snippets/:id" element={<SnippetDetail />} />
           <Route path="/dashboard/edit-snippet/:id" element={<SnippetForm />} />
+          
+          {/* Collections Routes */}
+          <Route path="/dashboard/collections" element={<CollectionList />} />
+          <Route path="/dashboard/add-collection" element={<CollectionForm />} />
+          <Route path="/dashboard/collections/:id" element={<CollectionDetail />} />
+          <Route path="/dashboard/edit-collection/:id" element={<CollectionForm />} />
+          
           {/* Add more protected routes here */}
         </Route>
 

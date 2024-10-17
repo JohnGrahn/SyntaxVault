@@ -22,7 +22,8 @@ const Login: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      await dispatch(loginUser({ username, password })).unwrap();
+      const result = await dispatch(loginUser({ username, password })).unwrap();
+      console.log('Login result:', result);
       navigate('/dashboard');
     } catch (error) {
       console.error('Failed to login:', error);
