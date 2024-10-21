@@ -10,9 +10,12 @@ const SearchBar: React.FC<{ selectedTags: string[] }> = ({ selectedTags }) => {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // Implement API call with filters
-    // For demonstration, assuming fetchSnippets accepts query params
-    dispatch(fetchSnippets()); // Modify this to include filters
+    // Dispatch fetchSnippets with the current filters
+    dispatch(fetchSnippets({
+      keyword: keyword.trim() || undefined,
+      language: language.trim() || undefined,
+      tags: selectedTags.length > 0 ? selectedTags : undefined,
+    }));
   };
 
   return (

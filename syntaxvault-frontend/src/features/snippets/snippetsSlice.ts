@@ -2,6 +2,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from '../../api/axiosInstance';
 import { Tag, Snippet, SnippetInput, SnippetUpdateInput } from '../../types/types';
+import { RootState } from '../../app/store';
+import qs from 'qs'; // Import qs
 
 interface SnippetsState {
   snippets: Snippet[];
@@ -15,12 +17,23 @@ const initialState: SnippetsState = {
   error: null,
 };
 
-// Fetch all snippets
+// Modify fetchSnippets to accept filters
 export const fetchSnippets = createAsyncThunk(
   'snippets/fetchSnippets',
-  async (_, thunkAPI) => {
+  async (params: FetchSnippetsParams = {}, thunkAPI) => {
     try {
-      const response = await axios.get('/api/snippets');
+      let url = '/api/snippets';
+      if (params.keyword || params.language || params.tags) {
+        url = '/api/snippets/search';
+      }
+      const response = await axios.get(url, {
+        params: {
+          keyword: params.keyword,
+          language: params.language,
+          tags: params.tags,
+        },
+        paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'repeat' }), // Customize serialization
+      });
       return response.data as Snippet[];
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response.data);
@@ -66,6 +79,12 @@ export const deleteSnippet = createAsyncThunk(
     }
   }
 );
+
+interface FetchSnippetsParams {
+  keyword?: string;
+  language?: string;
+  tags?: string[];
+}
 
 const snippetsSlice = createSlice({
   name: 'snippets',

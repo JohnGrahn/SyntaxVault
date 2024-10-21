@@ -78,11 +78,8 @@ public class SnippetController {
     public ResponseEntity<List<SnippetDTO>> searchSnippets(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String language,
-            @RequestParam(required = false) Set<String> tags) {
-        List<SnippetDTO> snippetDTOs = snippetService.searchSnippets(keyword, language, tags)
-                                                     .stream()
-                                                     .map(snippetMapper::toDTO)
-                                                     .collect(Collectors.toList());
+            @RequestParam(required = false) List<String> tags) { // Changed to List<String>
+        List<SnippetDTO> snippetDTOs = snippetService.searchSnippets(keyword, language, tags);
         return ResponseEntity.ok(snippetDTOs);
     }
 

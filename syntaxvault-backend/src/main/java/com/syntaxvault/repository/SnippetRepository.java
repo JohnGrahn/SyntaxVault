@@ -26,4 +26,11 @@ public interface SnippetRepository extends JpaRepository<Snippet, Long>, JpaSpec
 
     // Find most recent snippets, limited by count
     List<Snippet> findTop10ByOrderByCreationDateDesc();
+
+    @Query("SELECT DISTINCT s FROM Snippet s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.tags")
+    List<Snippet> findAllWithUserAndTags();
+
+    // Find snippets by user ID with User and Tags fetched
+    @Query("SELECT DISTINCT s FROM Snippet s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.tags WHERE s.user.id = :userId")
+    List<Snippet> findByUserIdWithUserAndTags(@Param("userId") Long userId);
 }

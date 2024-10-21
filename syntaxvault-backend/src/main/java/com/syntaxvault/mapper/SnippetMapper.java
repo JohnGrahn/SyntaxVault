@@ -25,7 +25,11 @@ public class SnippetMapper {
         dto.setLanguage(snippet.getLanguage());
         dto.setCreationDate(snippet.getCreationDate());
         dto.setLastModifiedDate(snippet.getLastModifiedDate());
-        dto.setUsername(snippet.getUser().getUsername());
+        
+        // Handle the case where the user might not be initialized
+        if (snippet.getUser() != null && snippet.getUser().getUsername() != null) {
+            dto.setUsername(snippet.getUser().getUsername());
+        }
         
         if (snippet.getTags() != null) {
             dto.setTags(snippet.getTags().stream()
