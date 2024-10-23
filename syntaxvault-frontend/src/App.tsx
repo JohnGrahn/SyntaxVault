@@ -12,7 +12,7 @@ import Header from './components/Layout/Header';
 import CollectionList from './components/Collections/CollectionList';
 import CollectionForm from './components/Collections/CollectionForm';
 import CollectionDetail from './components/Collections/CollectionDetail';
-
+import ProfilePage from './pages/ProfilePage';
 const App: React.FC = () => {
   return (
     <Router>
@@ -38,6 +38,7 @@ const App: React.FC = () => {
           <Route path="/dashboard/edit-collection/:id" element={<CollectionForm />} />
           
           {/* Add more protected routes here */}
+          <Route path="/dashboard/profile" element={<ProfilePage />} />
         </Route>
 
         {/* Catch-all Route */}
