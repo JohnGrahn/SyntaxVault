@@ -5,9 +5,10 @@ import Prism from '../../utils/prism';
 
 interface SnippetCardProps {
   snippet: Snippet;
+  isPublic?: boolean;
 }
 
-const SnippetCard: React.FC<SnippetCardProps> = ({ snippet }) => {
+const SnippetCard: React.FC<SnippetCardProps> = ({ snippet, isPublic }) => {
   useEffect(() => {
     Prism.highlightAll();
   }, [snippet]);
@@ -15,9 +16,13 @@ const SnippetCard: React.FC<SnippetCardProps> = ({ snippet }) => {
   const codePreview =
     snippet.content.length > 100 ? `${snippet.content.slice(0, 100)}...` : snippet.content;
 
+  const linkPath = isPublic 
+    ? `/public-snippets/${snippet.id}`
+    : `/dashboard/snippets/${snippet.id}`;
+
   return (
     <div className="border rounded-lg p-4 shadow hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <Link to={`/dashboard/snippets/${snippet.id}`} className="text-xl font-semibold text-blue-500 hover:underline">
+      <Link to={linkPath} className="text-xl font-semibold text-blue-500 hover:underline">
         {snippet.title}
       </Link>
       <p className="text-gray-600 mt-2">{snippet.description}</p>
@@ -32,6 +37,7 @@ const SnippetCard: React.FC<SnippetCardProps> = ({ snippet }) => {
         ))}
       </div>
       <div className="mt-4 text-sm text-gray-500">
+      <span>By: {snippet.username}</span>
         <span>Created At: {new Date(snippet.creationDate).toLocaleString()}</span>
         <span className="ml-4">Last Modified: {new Date(snippet.lastModifiedDate).toLocaleString()}</span>
       </div>

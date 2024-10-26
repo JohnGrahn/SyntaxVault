@@ -46,6 +46,7 @@ public class SnippetService {
         snippet.setCreationDate(LocalDateTime.now());
         snippet.setLastModifiedDate(LocalDateTime.now());
         snippet.setUser(user);
+        snippet.setIsPublic(snippetRequest.isPublic()); // Add this line to set isPublic
 
         // Handle tags
         Set<Tag> tags = new HashSet<>();
@@ -92,6 +93,8 @@ public class SnippetService {
         snippet.setContent(snippetRequest.getContent());
         snippet.setLanguage(snippetRequest.getLanguage());
         snippet.setLastModifiedDate(LocalDateTime.now());
+        snippet.setIsPublic(snippetRequest.isPublic()); // Add this line to update the isPublic flag
+        System.out.println("Received isPublic value: " + snippetRequest.isPublic());
 
         // Handle tags
         Set<Tag> tags = new HashSet<>();
@@ -137,5 +140,19 @@ public class SnippetService {
         return snippets.stream()
                        .map(snippetMapper::toDTO)
                        .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SnippetDTO> getPublicSnippets() {
+        List<Snippet> publicSnippets = snippetRepository.findByIsPublicTrue();
+        return publicSnippets.stream()
+                           .map(snippetMapper::toDTO)
+                           .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SnippetDTO> getPublicSnippetById(Long id) {
+        return snippetRepository.findByIdAndIsPublicTrue(id)
+                              .map(snippetMapper::toDTO);
     }
 }

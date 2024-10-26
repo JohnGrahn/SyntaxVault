@@ -16,9 +16,14 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-blue-600 text-white p-4 flex justify-between">
-      <Link to="/" className="text-xl font-bold">
-        SyntaxVault
-      </Link>
+      <div className="flex items-center space-x-6">
+        <Link to="/" className="text-xl font-bold">
+          SyntaxVault
+        </Link>
+        <Link to="/public-snippets" className="hover:text-gray-200">
+          Public Snippets
+        </Link>
+      </div>
       <nav>
         {user ? (
           <>

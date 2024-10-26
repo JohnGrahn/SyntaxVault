@@ -1,26 +1,21 @@
-// src/components/Snippets/SnippetDetail.tsx
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { fetchSnippets } from '../../features/snippets/snippetsSlice';
+import { fetchPublicSnippets } from '../../features/snippets/snippetsSlice';
 import Prism from '../../utils/prism';
 
-interface SnippetDetailProps {
-  isPublic?: boolean;
-}
-
-const SnippetDetail: React.FC<SnippetDetailProps> = ({ isPublic }) => {
+const PublicSnippetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
-  const { snippets, loading, error } = useAppSelector((state) => state.snippets);
+  const { publicSnippets, loading, error } = useAppSelector((state) => state.snippets);
 
-  const snippet = snippets.find((s) => s.id === Number(id));
+  const snippet = publicSnippets.find((s) => s.id === Number(id));
 
   useEffect(() => {
-    if (!snippets.length) {
-      dispatch(fetchSnippets());
+    if (!publicSnippets.length) {
+      dispatch(fetchPublicSnippets());
     }
-  }, [dispatch, snippets.length]);
+  }, [dispatch, publicSnippets.length]);
 
   useEffect(() => {
     Prism.highlightAll();
@@ -32,11 +27,14 @@ const SnippetDetail: React.FC<SnippetDetailProps> = ({ isPublic }) => {
 
   return (
     <div className="p-4">
-      <Link to="/dashboard" className="text-blue-500 mb-4 inline-block">
-        &larr; Back to Snippets
+      <Link to="/public-snippets" className="text-blue-500 mb-4 inline-block">
+        &larr; Back to Public Snippets
       </Link>
       <h2 className="text-3xl mb-2">{snippet.title}</h2>
       <p className="text-gray-600 mb-4">{snippet.description}</p>
+      <div className="mb-4">
+        <span className="text-sm text-gray-600">Shared by: {snippet.username}</span>
+      </div>
       <pre>
         <code className={`language-${snippet.language}`}>{snippet.content}</code>
       </pre>
@@ -49,14 +47,11 @@ const SnippetDetail: React.FC<SnippetDetailProps> = ({ isPublic }) => {
       </div>
       <div className="mt-4">
         <span className="text-sm text-gray-500">
-          Created At: {new Date(snippet.creationDate).toLocaleString()}
-        </span>
-        <span className="text-sm text-gray-500 ml-4">
-          Last Modified: {new Date(snippet.lastModifiedDate).toLocaleString()}
+          Created: {new Date(snippet.creationDate).toLocaleString()}
         </span>
       </div>
     </div>
   );
 };
 
-export default SnippetDetail;
+export default PublicSnippetDetail;

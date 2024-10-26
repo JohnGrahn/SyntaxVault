@@ -22,12 +22,14 @@ const SnippetForm: React.FC = () => {
     content: string;
     language: string;
     tags: Tag[];
+    isPublic: boolean;
   }>({
     title: '',
     description: '',
     content: '',
     language: '',
     tags: [],
+    isPublic: false,
   });
 
   const [newTag, setNewTag] = useState<string>('');
@@ -37,17 +39,22 @@ const SnippetForm: React.FC = () => {
       dispatch(fetchTags());
     }
     if (isEditing && !existingSnippet) {
-      dispatch(fetchSnippets());
-    } else if (isEditing && existingSnippet) {
-      setFormData({
-        title: existingSnippet.title,
-        description: existingSnippet.description,
-        content: existingSnippet.content,
-        language: existingSnippet.language,
-        tags: existingSnippet.tags,
-      });
+      dispatch(fetchSnippets({}));
     }
   }, [dispatch, isEditing, existingSnippet, tags.length]);
+
+  useEffect(() => {
+    if (isEditing && existingSnippet) {
+      setFormData({
+        title: existingSnippet.title || '',
+        description: existingSnippet.description || '',
+        content: existingSnippet.content || '',
+        language: existingSnippet.language || '',
+        tags: existingSnippet.tags || [],
+        isPublic: Boolean(existingSnippet.isPublic) // Ensure it's a boolean
+      });
+    }
+  }, [isEditing, existingSnippet]);
 
   const { title, description, content, language } = formData;
 
@@ -95,13 +102,19 @@ const SnippetForm: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const snippetData = {
-      ...formData,
-      tags: formData.tags.map(tag => tag.name), // Backend handles creation if id is 0
+      title: formData.title,
+      description: formData.description,
+      content: formData.content,
+      language: formData.language,
+      tags: formData.tags.map(tag => tag.name),
+      isPublic: Boolean(formData.isPublic) // Ensure it's a boolean
     };
-    
+    console.log('Submitting snippetData:', snippetData); // Debug log
+
     if (isEditing && id) {
       try {
-        await dispatch(updateSnippet({ id: Number(id), snippetData: snippetData })).unwrap();
+        const result = await dispatch(updateSnippet({ id: Number(id), snippetData })).unwrap();
+        console.log('Update result:', result); // Add this debug log
         navigate('/dashboard');
       } catch (err) {
         console.error('Failed to update snippet:', err);
@@ -197,6 +210,20 @@ const SnippetForm: React.FC = () => {
               Add Tag
             </button>
           </div>
+        </div>
+        <div className="mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={formData.isPublic}
+              onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+              className="mr-2"
+            />
+            Make this snippet public
+          </label>
+          <p className="text-sm text-gray-600">
+            Public snippets can be viewed by anyone, but can only be edited by you.
+          </p>
         </div>
         <button
           type="submit"

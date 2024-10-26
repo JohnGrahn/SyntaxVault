@@ -61,7 +61,7 @@ public class SnippetController {
         String username = authentication.getName();
         User user = userService.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("User not found"));
-        
+        System.out.println("Controller received isPublic value: " + snippetRequest.isPublic());
         SnippetDTO updatedSnippetDTO = snippetService.updateSnippet(id, snippetRequest, user);
         return ResponseEntity.ok(updatedSnippetDTO);
     }
@@ -97,4 +97,17 @@ public class SnippetController {
     // Additional endpoints (e.g., search) can be added here
 
     // Utility method to convert Collection to CollectionDTO can be added here if needed
+
+    @GetMapping("/public")
+    public ResponseEntity<List<SnippetDTO>> getPublicSnippets() {
+        List<SnippetDTO> publicSnippets = snippetService.getPublicSnippets();
+        return ResponseEntity.ok(publicSnippets);
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<SnippetDTO> getPublicSnippetById(@PathVariable Long id) {
+        Optional<SnippetDTO> snippetDTO = snippetService.getPublicSnippetById(id);
+        return snippetDTO.map(ResponseEntity::ok)
+                        .orElse(ResponseEntity.notFound().build());
+    }
 }

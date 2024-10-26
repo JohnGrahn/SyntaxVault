@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import java.util.Optional;
 import java.util.List;
 
 public interface SnippetRepository extends JpaRepository<Snippet, Long>, JpaSpecificationExecutor<Snippet> {
@@ -33,4 +33,8 @@ public interface SnippetRepository extends JpaRepository<Snippet, Long>, JpaSpec
     // Find snippets by user ID with User and Tags fetched
     @Query("SELECT DISTINCT s FROM Snippet s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.tags WHERE s.user.id = :userId")
     List<Snippet> findByUserIdWithUserAndTags(@Param("userId") Long userId);
+
+    List<Snippet> findByIsPublicTrue();
+
+    Optional<Snippet> findByIdAndIsPublicTrue(Long id);
 }

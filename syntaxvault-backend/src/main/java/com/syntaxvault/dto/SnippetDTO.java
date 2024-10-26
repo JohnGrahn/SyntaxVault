@@ -3,6 +3,7 @@ package com.syntaxvault.dto;
 import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 public class SnippetDTO {
@@ -15,4 +16,7 @@ public class SnippetDTO {
     private LocalDateTime lastModifiedDate;
     private String username; // Owner's username
     private Set<TagDTO> tags;
+
+    @JsonProperty("isPublic")
+    private boolean isPublic;
 }

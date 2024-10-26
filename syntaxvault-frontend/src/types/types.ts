@@ -13,6 +13,7 @@ export interface Tag {
     lastModifiedDate: string;
     username: string;
     tags: Tag[];
+    isPublic: boolean;
   }
   
   export interface SnippetInput {
@@ -20,10 +21,13 @@ export interface Tag {
     description: string;
     content: string;
     language: string;
-    tags: string[]; // Changed from number[] to string[]
+    tags: string[];
+    isPublic: boolean;
   }
   
-  export interface SnippetUpdateInput extends Partial<SnippetInput> {}
+  export interface SnippetUpdateInput extends Partial<SnippetInput> {
+    isPublic?: boolean;
+  }
   
   export interface Collection {
     id: number;

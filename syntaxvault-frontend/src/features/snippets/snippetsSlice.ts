@@ -7,12 +7,14 @@ import qs from 'qs'; // Import qs
 
 interface SnippetsState {
   snippets: Snippet[];
+  publicSnippets: Snippet[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: SnippetsState = {
   snippets: [],
+  publicSnippets: [],
   loading: false,
   error: null,
 };
@@ -86,6 +88,18 @@ interface FetchSnippetsParams {
   tags?: string[];
 }
 
+export const fetchPublicSnippets = createAsyncThunk(
+  'snippets/fetchPublicSnippets',
+  async (_, thunkAPI) => {
+    try {
+      const response = await axios.get('/api/snippets/public');
+      return response.data as Snippet[];
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const snippetsSlice = createSlice({
   name: 'snippets',
   initialState,
@@ -114,6 +128,9 @@ const snippetsSlice = createSlice({
       .addCase(addSnippet.fulfilled, (state, action: PayloadAction<Snippet>) => {
         state.loading = false;
         state.snippets.push(action.payload);
+        if (action.payload.isPublic) {
+          state.publicSnippets.push(action.payload);
+        }
       })
       .addCase(addSnippet.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
@@ -129,7 +146,18 @@ const snippetsSlice = createSlice({
         state.loading = false;
         const index = state.snippets.findIndex(snippet => snippet.id === action.payload.id);
         if (index !== -1) {
+          console.log('Updating snippet in state:', action.payload); // Debug log
           state.snippets[index] = action.payload;
+        }
+        
+        // Update public snippets array
+        const publicIndex = state.publicSnippets.findIndex(snippet => snippet.id === action.payload.id);
+        if (action.payload.isPublic && publicIndex === -1) {
+          state.publicSnippets.push(action.payload);
+        } else if (!action.payload.isPublic && publicIndex !== -1) {
+          state.publicSnippets.splice(publicIndex, 1);
+        } else if (action.payload.isPublic && publicIndex !== -1) {
+          state.publicSnippets[publicIndex] = action.payload;
         }
       })
       .addCase(updateSnippet.rejected, (state, action: PayloadAction<any>) => {
@@ -147,6 +175,21 @@ const snippetsSlice = createSlice({
         state.snippets = state.snippets.filter(snippet => snippet.id !== action.payload);
       })
       .addCase(deleteSnippet.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Fetch Public Snippets
+      .addCase(fetchPublicSnippets.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPublicSnippets.fulfilled, (state, action: PayloadAction<Snippet[]>) => {
+        state.loading = false;
+        state.publicSnippets = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchPublicSnippets.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload;
       });

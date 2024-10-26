@@ -13,6 +13,9 @@ import CollectionList from './components/Collections/CollectionList';
 import CollectionForm from './components/Collections/CollectionForm';
 import CollectionDetail from './components/Collections/CollectionDetail';
 import ProfilePage from './pages/ProfilePage';
+import PublicSnippets from './components/Snippets/PublicSnippets';
+import PublicSnippetDetail from './components/Snippets/PublicSnippetDetail';
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -40,6 +43,10 @@ const App: React.FC = () => {
           {/* Add more protected routes here */}
           <Route path="/dashboard/profile" element={<ProfilePage />} />
         </Route>
+
+        {/* Public Routes */}
+        <Route path="/public-snippets" element={<PublicSnippets />} />
+        <Route path="/public-snippets/:id" element={<PublicSnippetDetail />} />
 
         {/* Catch-all Route */}
         <Route path="*" element={<NotFound />} />

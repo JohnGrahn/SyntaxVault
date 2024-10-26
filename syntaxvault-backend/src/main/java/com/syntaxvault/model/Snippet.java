@@ -53,4 +53,15 @@ public class Snippet {
     )
     @JsonManagedReference
     private Set<Tag> tags;
+
+    @Column(name = "is_public")
+    private boolean isPublic;
+
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
 }
