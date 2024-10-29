@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 public class SnippetService {
@@ -67,11 +68,15 @@ public class SnippetService {
     }
 
     @Transactional(readOnly = true)
-    public List<SnippetDTO> getAllSnippetsDTO(){
-        List<Snippet> snippets = snippetRepository.findAllWithUserAndTags();
+    public List<SnippetDTO> getAllSnippetsDTO() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Snippet> snippets = snippetRepository.findByUserIdWithUserAndTags(currentUser.getId());
         return snippets.stream()
-                       .map(snippetMapper::toDTO)
-                       .collect(Collectors.toList());
+            .map(snippetMapper::toDTO)
+            .collect(Collectors.toList());
     }
 
     @Transactional
@@ -115,10 +120,15 @@ public class SnippetService {
     }
 
     @Transactional(readOnly = true)
-    public List<SnippetDTO> searchSnippets(String keyword, String language, List<String> tags) { // Changed to List<String>
+    public List<SnippetDTO> searchSnippets(String keyword, String language, List<String> tags) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
         List<Snippet> allSnippets = snippetRepository.findAllWithUserAndTags();
         
         return allSnippets.stream()
+            .filter(snippet -> snippet.getUser().equals(currentUser) || snippet.getIsPublic())
             .filter(snippet -> (keyword == null || keyword.isEmpty() ||
                                 snippet.getTitle().toLowerCase().contains(keyword.toLowerCase()) ||
                                 snippet.getContent().toLowerCase().contains(keyword.toLowerCase())))

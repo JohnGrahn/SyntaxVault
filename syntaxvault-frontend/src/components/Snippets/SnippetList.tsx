@@ -9,6 +9,12 @@ import { Snippet, Tag } from '../../types/types';
 const SnippetList: React.FC = () => {
   const dispatch = useAppDispatch();
   const { snippets: stateSnippets, loading, error } = useAppSelector((state) => state.snippets);
+  const { user } = useAppSelector((state) => state.auth);
+
+  // Only show user's own snippets
+  const userSnippets = stateSnippets.filter(snippet => 
+    snippet.username === user
+  );
 
   useEffect(() => {
     dispatch(fetchSnippets());
@@ -16,7 +22,7 @@ const SnippetList: React.FC = () => {
 
   useEffect(() => {
     Prism.highlightAll();
-  }, [stateSnippets]);
+  }, [userSnippets]);
 
   const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this snippet?')) {
@@ -35,11 +41,11 @@ const SnippetList: React.FC = () => {
           Add Snippet
         </Link>
       </div>
-      {stateSnippets.length === 0 ? (
+      {userSnippets.length === 0 ? (
         <p>No snippets available. Add some!</p>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {stateSnippets.map((snippet) => (
+          {userSnippets.map((snippet) => (
             <div key={snippet.id} className="border rounded p-4 shadow">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl">{snippet.title}</h3>
