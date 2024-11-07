@@ -1,6 +1,7 @@
 // src/features/snippets/snippetsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from '../../api/axiosInstance';
+import publicAxios from '../../api/publicAxios';
 import { Tag, Snippet, SnippetInput, SnippetUpdateInput } from '../../types/types';
 import { RootState } from '../../app/store';
 import qs from 'qs'; // Import qs
@@ -92,7 +93,7 @@ export const fetchPublicSnippets = createAsyncThunk(
   'snippets/fetchPublicSnippets',
   async (_, thunkAPI) => {
     try {
-      const response = await axios.get('/api/snippets/public');
+      const response = await publicAxios.get('/api/snippets/public');
       return response.data as Snippet[];
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response.data);
