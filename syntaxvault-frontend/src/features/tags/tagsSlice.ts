@@ -41,6 +41,19 @@ export const createTag = createAsyncThunk(
   }
 );
 
+export const searchTags = createAsyncThunk(
+  'tags/searchTags',
+  async (query: string, thunkAPI) => {
+    try {
+      if (query.length < 2) return [];
+      const response = await axios.get(`/api/tags/search?query=${encodeURIComponent(query)}`);
+      return response.data as Tag[];
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const tagsSlice = createSlice({
   name: 'tags',
   initialState,
@@ -71,6 +84,20 @@ const tagsSlice = createSlice({
         state.tags.push(action.payload);
       })
       .addCase(createTag.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Search Tags
+      .addCase(searchTags.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchTags.fulfilled, (state, action: PayloadAction<Tag[]>) => {
+        state.loading = false;
+        state.tags = action.payload; // Update tags with search results
+      })
+      .addCase(searchTags.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload;
       });

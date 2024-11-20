@@ -5,6 +5,7 @@ import { addSnippet, updateSnippet, fetchSnippets } from '../../features/snippet
 import { fetchTags, createTag } from '../../features/tags/tagsSlice';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Tag } from '../../types/types';
+import SearchableTagSelect from '../Tags/SearchableTagSelect';
 
 const SnippetForm: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -63,13 +64,20 @@ const SnippetForm: React.FC = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const onTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(e.target.selectedOptions);
-    const selectedTags: Tag[] = selectedOptions.map((option) => {
-      const tag = tags.find((t) => t.name === option.value);
-      return tag ? tag : { id: 0, name: option.value }; // Default Tag if not found
-    });
-    setFormData({ ...formData, tags: selectedTags });
+  const handleTagSelect = (tag: Tag) => {
+    if (!formData.tags.some(t => t.id === tag.id)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tag]
+      }));
+    }
+  };
+
+  const handleTagDeselect = (tagId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(t => t.id !== tagId)
+    }));
   };
 
   const handleAddTag = async () => {
@@ -181,19 +189,11 @@ const SnippetForm: React.FC = () => {
         </div>
         <div className="mb-6">
           <label className="block mb-1">Tags</label>
-          <select
-            multiple
-            value={selectedTagNames}
-            onChange={onTagsChange}
-            className="w-full px-3 py-2 border rounded h-32"
-          >
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.name}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-sm text-gray-600 mt-1">Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
+          <SearchableTagSelect
+            selectedTags={formData.tags}
+            onTagSelect={handleTagSelect}
+            onTagDeselect={handleTagDeselect}
+          />
           <div className="mt-2 flex">
             <input
               type="text"

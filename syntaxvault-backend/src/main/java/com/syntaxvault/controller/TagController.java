@@ -6,10 +6,12 @@ import com.syntaxvault.model.Tag;
 import com.syntaxvault.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/tags")
@@ -95,5 +97,18 @@ public class TagController {
         }
         tagRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<TagDTO>> searchTags(@RequestParam String query) {
+        if (query.length() < 2) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        List<Tag> tags = tagRepository.findByNameContainingIgnoreCase(query);
+        List<TagDTO> tagDTOs = tags.stream()
+                                  .map(tagMapper::toDTO)
+                                  .collect(Collectors.toList());
+        return ResponseEntity.ok(tagDTOs);
     }
 }
