@@ -57,4 +57,17 @@ public class CollectionController {
         collectionService.deleteCollection(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/public")
+    public ResponseEntity<List<CollectionDTO>> getPublicCollections() {
+        List<CollectionDTO> publicCollections = collectionService.getPublicCollections();
+        return ResponseEntity.ok(publicCollections);
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<CollectionDTO> getPublicCollectionById(@PathVariable Long id) {
+        Optional<CollectionDTO> collectionDTO = collectionService.getPublicCollectionById(id);
+        return collectionDTO.map(ResponseEntity::ok)
+                          .orElse(ResponseEntity.notFound().build());
+    }
 }

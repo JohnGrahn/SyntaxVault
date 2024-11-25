@@ -32,13 +32,15 @@ export interface Tag {
   export interface Collection {
     id: number;
     name: string;
-    username: string; // Owner's username
+    username: string;
     snippetIds: number[];
+    isPublic: boolean;
   }
   
   export interface CollectionRequest {
     name: string;
-    snippetIds?: number[];
+    snippetIds: number[];
+    isPublic: boolean;
   }
   
   export interface CollectionInput {

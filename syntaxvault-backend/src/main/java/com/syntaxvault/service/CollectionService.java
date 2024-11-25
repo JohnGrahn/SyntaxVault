@@ -43,11 +43,13 @@ public class CollectionService {
         Collection collection = new Collection();
         collection.setName(collectionRequest.getName());
         collection.setUser(user);
+        collection.setIsPublic(collectionRequest.getIsPublic());
 
         if (collectionRequest.getSnippetIds() != null) {
             Set<Snippet> snippets = collectionRequest.getSnippetIds().stream()
                                         .map(id -> snippetRepository.findById(id)
                                             .orElseThrow(() -> new RuntimeException("Snippet not found")))
+                                        .filter(snippet -> !collection.getIsPublic() || snippet.getIsPublic()) // Only allow public snippets in public collections
                                         .collect(Collectors.toSet());
             collection.setSnippets(snippets);
         }
@@ -70,18 +72,33 @@ public class CollectionService {
                           .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<CollectionDTO> getPublicCollections() {
+        List<Collection> collections = collectionRepository.findByIsPublicTrue();
+        return collections.stream()
+                         .map(collectionMapper::toDTO)
+                         .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CollectionDTO> getPublicCollectionById(Long id) {
+        Optional<Collection> collection = collectionRepository.findByIdAndIsPublicTrue(id);
+        return collection.map(collectionMapper::toDTO);
+    }
+
     @Transactional
     public CollectionDTO updateCollection(Long id, CollectionRequest collectionRequest){
         Collection collection = collectionRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Collection not found"));
 
         collection.setName(collectionRequest.getName());
+        collection.setIsPublic(collectionRequest.getIsPublic());
 
         if (collectionRequest.getSnippetIds() != null) {
             Set<Snippet> snippets = collectionRequest.getSnippetIds().stream()
-                                        .map(snippetRepository::findById)
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
+                                        .map(snippetId -> snippetRepository.findById(snippetId)
+                                            .orElseThrow(() -> new RuntimeException("Snippet not found")))
+                                        .filter(snippet -> !collection.getIsPublic() || snippet.getIsPublic()) // Only allow public snippets in public collections
                                         .collect(Collectors.toSet());
             collection.setSnippets(snippets);
         }

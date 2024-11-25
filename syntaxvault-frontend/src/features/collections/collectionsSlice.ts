@@ -5,12 +5,14 @@ import { Collection, CollectionRequest } from '../../types/types';
 
 interface CollectionsState {
   collections: Collection[];
+  publicCollections: Collection[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: CollectionsState = {
   collections: [],
+  publicCollections: [],
   loading: false,
   error: null,
 };
@@ -21,6 +23,19 @@ export const fetchCollections = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const response = await axios.get('/api/collections');
+      return response.data as Collection[];
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+// Fetch public collections
+export const fetchPublicCollections = createAsyncThunk(
+  'collections/fetchPublicCollections',
+  async (_, thunkAPI) => {
+    try {
+      const response = await axios.get('/api/collections/public');
       return response.data as Collection[];
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response.data);
@@ -83,6 +98,21 @@ const collectionsSlice = createSlice({
         state.collections = action.payload;
       })
       .addCase(fetchCollections.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Fetch Public Collections
+      .addCase(fetchPublicCollections.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPublicCollections.fulfilled, (state, action: PayloadAction<Collection[]>) => {
+        state.loading = false;
+        state.publicCollections = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchPublicCollections.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload;
       })

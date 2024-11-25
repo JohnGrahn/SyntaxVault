@@ -13,15 +13,22 @@ const CollectionForm: React.FC = () => {
   const { collections, loading, error } = useAppSelector((state) => state.collections);
   const { snippets } = useAppSelector((state) => state.snippets);
 
-  const [name, setName] = useState('');
-  const [selectedSnippets, setSelectedSnippets] = useState<number[]>([]);
+  const [formData, setFormData] = useState<{
+    name: string;
+    snippetIds: number[];
+    isPublic: boolean;
+  }>({
+    name: '',
+    snippetIds: [],
+    isPublic: false,
+  });
 
   useEffect(() => {
     if (isEditMode && collections.length === 0) {
       dispatch(fetchCollections());
     }
     if (snippets.length === 0) {
-      dispatch(fetchSnippets());
+      dispatch(fetchSnippets({}));
     }
   }, [dispatch, isEditMode, collections.length, snippets.length]);
 
@@ -29,23 +36,41 @@ const CollectionForm: React.FC = () => {
     if (isEditMode && collections.length > 0) {
       const collection = collections.find((col) => col.id === parseInt(id!));
       if (collection) {
-        setName(collection.name);
-        setSelectedSnippets(collection.snippetIds);
+        setFormData({
+          name: collection.name || '',
+          snippetIds: collection.snippetIds || [],
+          isPublic: Boolean(collection.isPublic),
+        });
       }
     }
   }, [isEditMode, collections, id]);
 
   const handleSnippetSelection = (snippetId: number) => {
-    setSelectedSnippets((prev) =>
-      prev.includes(snippetId) ? prev.filter((id) => id !== snippetId) : [...prev, snippetId]
-    );
+    setFormData(prev => ({
+      ...prev,
+      snippetIds: prev.snippetIds.includes(snippetId) 
+        ? prev.snippetIds.filter((id) => id !== snippetId) 
+        : [...prev.snippetIds, snippetId]
+    }));
+  };
+
+  const handlePublicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.checked;
+    setFormData(prev => ({
+      ...prev,
+      isPublic: newValue,
+      snippetIds: newValue 
+        ? prev.snippetIds.filter(id => snippets.find(s => s.id === id)?.isPublic)
+        : prev.snippetIds
+    }));
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const collectionData: CollectionRequest = {
-      name,
-      snippetIds: selectedSnippets,
+      name: formData.name,
+      snippetIds: formData.snippetIds,
+      isPublic: formData.isPublic,
     };
 
     if (isEditMode) {
@@ -72,12 +97,29 @@ const CollectionForm: React.FC = () => {
           <label className="block text-gray-700">Collection Name</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
             maxLength={255}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
           />
+        </div>
+
+        <div>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={formData.isPublic}
+              onChange={handlePublicChange}
+              className="mr-2"
+            />
+            <span className="text-gray-700">Make Collection Public</span>
+          </label>
+          {formData.isPublic && (
+            <p className="text-sm text-gray-500 mt-1">
+              Note: Only public snippets can be included in public collections
+            </p>
+          )}
         </div>
         
         <div>
@@ -86,17 +128,22 @@ const CollectionForm: React.FC = () => {
             <p>No snippets available to add.</p>
           ) : (
             <div className="mt-2 grid grid-cols-1 gap-2 max-h-60 overflow-y-auto border p-2 rounded">
-              {snippets.map((snippet) => (
-                <label key={snippet.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedSnippets.includes(snippet.id)}
-                    onChange={() => handleSnippetSelection(snippet.id)}
-                    className="mr-2"
-                  />
-                  {snippet.title}
-                </label>
-              ))}
+              {snippets
+                .filter(snippet => !formData.isPublic || snippet.isPublic)
+                .map((snippet) => (
+                  <label key={snippet.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.snippetIds.includes(snippet.id)}
+                      onChange={() => handleSnippetSelection(snippet.id)}
+                      className="mr-2"
+                    />
+                    {snippet.title}
+                    {formData.isPublic && !snippet.isPublic && (
+                      <span className="text-red-500 ml-2">(Not available - private snippet)</span>
+                    )}
+                  </label>
+                ))}
             </div>
           )}
         </div>

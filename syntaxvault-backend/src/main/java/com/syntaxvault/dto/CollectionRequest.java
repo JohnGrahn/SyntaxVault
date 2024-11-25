@@ -14,4 +14,14 @@ public class CollectionRequest {
     
     // Optionally include snippet IDs to associate with the collection
     private Set<Long> snippetIds;
+
+    private boolean isPublic;
+
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
 }

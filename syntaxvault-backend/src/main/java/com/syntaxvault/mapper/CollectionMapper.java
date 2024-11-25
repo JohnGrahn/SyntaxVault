@@ -24,6 +24,8 @@ public class CollectionMapper {
                                      .collect(Collectors.toSet()));
         }
         
+        dto.setIsPublic(collection.getIsPublic());
+        
         return dto;
     }
 

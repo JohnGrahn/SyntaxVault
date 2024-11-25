@@ -23,6 +23,9 @@ const Header: React.FC = () => {
         <Link to="/public-snippets" className="hover:text-gray-200">
           Public Snippets
         </Link>
+        <Link to="/public-collections" className="hover:text-gray-200">
+          Public Collections
+        </Link>
       </div>
       <nav>
         {user ? (

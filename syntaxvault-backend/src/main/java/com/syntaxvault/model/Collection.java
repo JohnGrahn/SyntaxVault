@@ -31,4 +31,15 @@ public class Collection {
         inverseJoinColumns = @JoinColumn(name = "snippet_id")
     )
     private Set<Snippet> snippets;
+
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
 }

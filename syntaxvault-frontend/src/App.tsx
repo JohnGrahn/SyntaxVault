@@ -15,6 +15,8 @@ import CollectionDetail from './components/Collections/CollectionDetail';
 import ProfilePage from './pages/ProfilePage';
 import PublicSnippets from './components/Snippets/PublicSnippets';
 import PublicSnippetDetail from './components/Snippets/PublicSnippetDetail';
+import PublicCollections from './components/Collections/PublicCollections';
+import PublicCollectionDetail from './components/Collections/PublicCollectionDetail';
 
 const App: React.FC = () => {
   return (
@@ -47,6 +49,8 @@ const App: React.FC = () => {
         {/* Public Routes */}
         <Route path="/public-snippets" element={<PublicSnippets />} />
         <Route path="/public-snippets/:id" element={<PublicSnippetDetail />} />
+        <Route path="/public-collections" element={<PublicCollections />} />
+        <Route path="/public-collections/:id" element={<PublicCollectionDetail />} />
 
         {/* Catch-all Route */}
         <Route path="*" element={<NotFound />} />
