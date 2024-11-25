@@ -10,10 +10,21 @@ interface AuthState {
   error: string | null;
 }
 
+function isTokenValid(token: string | null): boolean {
+  if (!token) return false;
+  try {
+    const decoded = jwtDecode<{ exp: number }>(token);
+    return decoded.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+const storedToken = localStorage.getItem('token');
 const initialState: AuthState = {
-  token: localStorage.getItem('token'),
-  user: localStorage.getItem('token') 
-    ? (jwtDecode<{ sub: string }>(localStorage.getItem('token')!).sub || null)
+  token: isTokenValid(storedToken) ? storedToken : null,
+  user: isTokenValid(storedToken) 
+    ? (jwtDecode<{ sub: string }>(storedToken!).sub || null)
     : null,
   loading: false,
   error: null,
