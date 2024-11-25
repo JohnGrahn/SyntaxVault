@@ -2,8 +2,9 @@
 import React, { useState, FormEvent } from 'react';
 import { useAppDispatch } from '../../hooks';
 import { fetchSnippets } from '../../features/snippets/snippetsSlice';
+import { Tag } from '../../types/types';
 
-const SearchBar: React.FC<{ selectedTags: string[] }> = ({ selectedTags }) => {
+const SearchBar: React.FC<{ selectedTags: Tag[] }> = ({ selectedTags }) => {
   const dispatch = useAppDispatch();
   const [keyword, setKeyword] = useState('');
   const [language, setLanguage] = useState('');
@@ -14,7 +15,7 @@ const SearchBar: React.FC<{ selectedTags: string[] }> = ({ selectedTags }) => {
     dispatch(fetchSnippets({
       keyword: keyword.trim() || undefined,
       language: language.trim() || undefined,
-      tags: selectedTags.length > 0 ? selectedTags : undefined,
+      tags: selectedTags.length > 0 ? selectedTags.map(tag => tag.name) : undefined,
     }));
   };
 
