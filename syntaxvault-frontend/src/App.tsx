@@ -17,6 +17,7 @@ import PublicSnippets from './components/Snippets/PublicSnippets';
 import PublicSnippetDetail from './components/Snippets/PublicSnippetDetail';
 import PublicCollections from './components/Collections/PublicCollections';
 import PublicCollectionDetail from './components/Collections/PublicCollectionDetail';
+import FoldersPage from './pages/FoldersPage';
 
 const App: React.FC = () => {
   return (
@@ -41,6 +42,9 @@ const App: React.FC = () => {
           <Route path="/dashboard/add-collection" element={<CollectionForm />} />
           <Route path="/dashboard/collections/:id" element={<CollectionDetail />} />
           <Route path="/dashboard/edit-collection/:id" element={<CollectionForm />} />
+          
+          {/* Folders Routes */}
+          <Route path="/dashboard/folders" element={<FoldersPage />} />
           
           {/* Add more protected routes here */}
           <Route path="/dashboard/profile" element={<ProfilePage />} />

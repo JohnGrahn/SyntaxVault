@@ -36,6 +36,9 @@ const Header: React.FC = () => {
             <Link to="/dashboard/collections" className="mr-4">
               Collections
             </Link>
+            <Link to="/dashboard/folders" className="mr-4">
+              Folders
+            </Link>
             <Link to="/dashboard/profile" className="mr-4">
               Profile
             </Link>

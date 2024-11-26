@@ -57,6 +57,10 @@ public class Snippet {
     @Column(name = "is_public")
     private boolean isPublic;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private Folder folder;
+
     public boolean getIsPublic() {
         return isPublic;
     }
