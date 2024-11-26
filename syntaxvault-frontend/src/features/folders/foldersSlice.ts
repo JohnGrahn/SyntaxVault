@@ -45,19 +45,6 @@ export const fetchFolders = createAsyncThunk(
   }
 );
 
-// Fetch root folders
-export const fetchRootFolders = createAsyncThunk(
-  'folders/fetchRootFolders',
-  async (_, thunkAPI) => {
-    try {
-      const response = await axios.get('/api/folders/root');
-      return response.data as Folder[];
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response.data);
-    }
-  }
-);
-
 // Create folder
 export const createFolder = createAsyncThunk(
   'folders/createFolder',
@@ -110,6 +97,38 @@ export const getFolderById = createAsyncThunk(
   }
 );
 
+const buildFolderHierarchy = (folders: Folder[]): Folder[] => {
+  const folderMap = new Map<number, Folder>();
+  
+  // First pass: create a map of all folders with clean subfolders arrays
+  folders.forEach(folder => {
+    folderMap.set(folder.id, { ...folder, subfolders: [] });
+  });
+
+  // Second pass: build hierarchy
+  return folders
+    .filter(folder => folder.parentId === null)
+    .map(folder => {
+      const rootFolder = folderMap.get(folder.id);
+      if (!rootFolder) return folder;
+
+      // Recursively build subfolder structure
+      const buildSubfolders = (parentId: number) => {
+        return folders
+          .filter(f => f.parentId === parentId)
+          .map(f => {
+            const folder = folderMap.get(f.id);
+            if (!folder) return f;
+            folder.subfolders = buildSubfolders(f.id);
+            return folder;
+          });
+      };
+
+      rootFolder.subfolders = buildSubfolders(folder.id);
+      return rootFolder;
+    });
+};
+
 const foldersSlice = createSlice({
   name: 'folders',
   initialState,
@@ -120,7 +139,6 @@ const foldersSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Folders
       .addCase(fetchFolders.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -128,100 +146,25 @@ const foldersSlice = createSlice({
       .addCase(fetchFolders.fulfilled, (state, action: PayloadAction<Folder[]>) => {
         state.loading = false;
         state.folders = action.payload;
+        state.rootFolders = buildFolderHierarchy(action.payload);
       })
       .addCase(fetchFolders.rejected, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload;
       })
-
-      // Fetch Root Folders
-      .addCase(fetchRootFolders.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchRootFolders.fulfilled, (state, action: PayloadAction<Folder[]>) => {
-        state.loading = false;
-        state.rootFolders = action.payload;
-      })
-      .addCase(fetchRootFolders.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // Create Folder
-      .addCase(createFolder.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(createFolder.fulfilled, (state, action: PayloadAction<Folder>) => {
-        state.loading = false;
-        state.folders.push(action.payload);
-        if (!action.payload.parentId) {
-          state.rootFolders.push(action.payload);
-        }
-      })
-      .addCase(createFolder.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // Update Folder
-      .addCase(updateFolder.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(updateFolder.fulfilled, (state, action: PayloadAction<Folder>) => {
         state.loading = false;
+        // Update the folder in the folders array
         const index = state.folders.findIndex(folder => folder.id === action.payload.id);
         if (index !== -1) {
           state.folders[index] = action.payload;
         }
-        const rootIndex = state.rootFolders.findIndex(folder => folder.id === action.payload.id);
-        if (rootIndex !== -1) {
-          if (action.payload.parentId) {
-            state.rootFolders.splice(rootIndex, 1);
-          } else {
-            state.rootFolders[rootIndex] = action.payload;
-          }
-        } else if (!action.payload.parentId) {
-          state.rootFolders.push(action.payload);
+        // Rebuild hierarchy
+        state.rootFolders = buildFolderHierarchy(state.folders);
+        // Update current folder if needed
+        if (state.currentFolder?.id === action.payload.id) {
+          state.currentFolder = action.payload;
         }
-      })
-      .addCase(updateFolder.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // Delete Folder
-      .addCase(deleteFolder.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteFolder.fulfilled, (state, action: PayloadAction<number>) => {
-        state.loading = false;
-        state.folders = state.folders.filter(folder => folder.id !== action.payload);
-        state.rootFolders = state.rootFolders.filter(folder => folder.id !== action.payload);
-        if (state.currentFolder?.id === action.payload) {
-          state.currentFolder = null;
-        }
-      })
-      .addCase(deleteFolder.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // Get Folder by ID
-      .addCase(getFolderById.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getFolderById.fulfilled, (state, action: PayloadAction<Folder>) => {
-        state.loading = false;
-        state.currentFolder = action.payload;
-      })
-      .addCase(getFolderById.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
       });
   },
 });

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import {
-  fetchRootFolders,
   fetchFolders,
   deleteFolder,
+  updateFolder,
   Folder,
   setCurrentFolder,
 } from '../features/folders/foldersSlice';
@@ -12,6 +12,8 @@ import FolderForm from '../components/Folders/FolderForm';
 import FolderContextMenu from '../components/Folders/FolderContextMenu';
 import FolderBreadcrumb from '../components/Folders/FolderBreadcrumb';
 import Modal from '../components/Layout/Modal';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const FoldersPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -33,7 +35,6 @@ const FoldersPage: React.FC = () => {
   });
 
   useEffect(() => {
-    dispatch(fetchRootFolders());
     dispatch(fetchFolders());
   }, [dispatch]);
 
@@ -52,7 +53,7 @@ const FoldersPage: React.FC = () => {
   };
 
   const handleCreateSubfolder = (parentId: number) => {
-    setSelectedFolder(folders.find((f: Folder) => f.id === parentId) || null);
+    setSelectedFolder(folders.find(f => f.id === parentId) || null);
     setShowCreateForm(true);
   };
 
@@ -74,6 +75,34 @@ const FoldersPage: React.FC = () => {
     }
   };
 
+  const handleFolderDrop = async (draggedId: number, targetId: number) => {
+    const draggedFolder = folders.find(f => f.id === draggedId);
+    const targetFolder = folders.find(f => f.id === targetId);
+
+    if (!draggedFolder || !targetFolder) return;
+
+    // Prevent dropping a folder into itself or its children
+    if (draggedFolder.path === targetFolder.path || targetFolder.path.startsWith(draggedFolder.path + '/')) {
+      return;
+    }
+
+    try {
+      await dispatch(updateFolder({
+        id: draggedId,
+        folderData: {
+          name: draggedFolder.name,
+          parentId: targetId
+        }
+      })).unwrap();
+
+      // Refresh folders and update the view
+      await dispatch(fetchFolders()).unwrap();
+      dispatch(setCurrentFolder(targetFolder));
+    } catch (err) {
+      console.error('Failed to move folder:', err);
+    }
+  };
+
   const closeContextMenu = () => {
     setContextMenu({ show: false, x: 0, y: 0, folder: null });
   };
@@ -87,87 +116,92 @@ const FoldersPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full">
-      {/* Folder Tree Sidebar */}
-      <div className="w-64 border-r p-4 bg-gray-50">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Folders</h2>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            New
-          </button>
+    <DndProvider backend={HTML5Backend}>
+      <div className="flex h-full">
+        {/* Folder Tree Sidebar */}
+        <div className="w-64 border-r p-4 bg-gray-50">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Folders</h2>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              New
+            </button>
+          </div>
+          <FolderTree
+            folders={rootFolders}
+            selectedFolderId={currentFolder?.id || null}
+            onFolderSelect={handleFolderSelect}
+            onFolderContextMenu={handleFolderContextMenu}
+            onFolderDrop={handleFolderDrop}
+          />
         </div>
-        <FolderTree
-          folders={rootFolders}
-          selectedFolderId={currentFolder?.id || null}
-          onFolderSelect={handleFolderSelect}
-          onFolderContextMenu={handleFolderContextMenu}
-        />
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4">
-        {currentFolder && (
-          <>
-            <FolderBreadcrumb
-              path={currentFolder.path}
-              folders={folders}
-              onFolderClick={(id) => {
-                const folder = folders.find((f: Folder) => f.id === id);
-                if (folder) handleFolderSelect(folder);
+        {/* Main Content */}
+        <div className="flex-1 p-4">
+          {currentFolder && (
+            <>
+              <FolderBreadcrumb
+                path={currentFolder.path}
+                folders={folders}
+                onFolderClick={(id) => {
+                  const folder = folders.find(f => f.id === id);
+                  if (folder) handleFolderSelect(folder);
+                }}
+              />
+              {/* Add your snippet list or other content here */}
+            </>
+          )}
+        </div>
+
+        {/* Create Folder Modal */}
+        {showCreateForm && (
+          <Modal 
+            isOpen={showCreateForm}
+            title="Create New Folder"
+            onClose={() => setShowCreateForm(false)}
+          >
+            <FolderForm
+              parentId={selectedFolder?.id}
+              onClose={() => {
+                setShowCreateForm(false);
+                setSelectedFolder(null);
               }}
             />
-            {/* Add your snippet list or other content here */}
-          </>
+          </Modal>
+        )}
+
+        {/* Edit Folder Modal */}
+        {showEditForm && selectedFolder && (
+          <Modal 
+            isOpen={showEditForm}
+            title="Edit Folder"
+            onClose={() => setShowEditForm(false)}
+          >
+            <FolderForm
+              folder={selectedFolder}
+              onClose={() => {
+                setShowEditForm(false);
+                setSelectedFolder(null);
+              }}
+            />
+          </Modal>
+        )}
+
+        {/* Context Menu */}
+        {contextMenu.show && contextMenu.folder && (
+          <FolderContextMenu
+            folder={contextMenu.folder}
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            onClose={closeContextMenu}
+            onEdit={handleEditFolder}
+            onDelete={handleDeleteFolder}
+            onCreateSubfolder={handleCreateSubfolder}
+          />
         )}
       </div>
-
-      {/* Create Folder Modal */}
-      {showCreateForm && (
-        <Modal 
-          isOpen={showCreateForm}
-          onClose={() => setShowCreateForm(false)}
-          title="Create New Folder"
-        >
-          <FolderForm
-            parentId={selectedFolder?.id}
-            onClose={() => {
-              setShowCreateForm(false);
-            }}
-          />
-        </Modal>
-      )}
-
-      {/* Edit Folder Modal */}
-      {showEditForm && selectedFolder && (
-        <Modal 
-          isOpen={showEditForm}
-          onClose={() => setShowEditForm(false)}
-          title="Edit Folder"
-        >
-          <FolderForm
-            folder={selectedFolder}
-            onClose={() => {
-              setShowEditForm(false);
-            }}
-          />
-        </Modal>
-      )}
-
-      {/* Context Menu */}
-      {contextMenu.show && contextMenu.folder && (
-        <FolderContextMenu
-          folder={contextMenu.folder}
-          position={{ x: contextMenu.x, y: contextMenu.y }}
-          onClose={closeContextMenu}
-          onEdit={handleEditFolder}
-          onDelete={handleDeleteFolder}
-          onCreateSubfolder={handleCreateSubfolder}
-        />
-      )}
-    </div>
+    </DndProvider>
   );
 };
 
