@@ -3,7 +3,6 @@ package com.syntaxvault.mapper;
 
 import com.syntaxvault.dto.SnippetDTO;
 import com.syntaxvault.model.Snippet;
-import com.syntaxvault.model.Tag;
 import org.springframework.stereotype.Component;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;

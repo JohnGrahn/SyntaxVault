@@ -9,7 +9,6 @@ import com.syntaxvault.dto.SnippetRequest;
 import com.syntaxvault.repository.SnippetRepository;
 import com.syntaxvault.repository.TagRepository;
 import com.syntaxvault.repository.UserRepository;
-import com.syntaxvault.specification.SnippetSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +18,9 @@ import java.util.List;
 import java.util.Optional;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.syntaxvault.model.Folder;
+import com.syntaxvault.repository.FolderRepository;
 
 @Service
 public class SnippetService {
@@ -36,6 +36,9 @@ public class SnippetService {
 
     @Autowired
     private SnippetMapper snippetMapper; // Inject the mapper
+
+    @Autowired
+    private FolderRepository folderRepository;
 
     @Transactional
     public SnippetDTO createSnippet(SnippetRequest snippetRequest, User user) {
@@ -164,5 +167,55 @@ public class SnippetService {
     public Optional<SnippetDTO> getPublicSnippetById(Long id) {
         return snippetRepository.findByIdAndIsPublicTrue(id)
                               .map(snippetMapper::toDTO);
+    }
+
+    @Transactional
+    public SnippetDTO moveSnippet(Long snippetId, Long folderId, User user) {
+        Snippet snippet = snippetRepository.findById(snippetId)
+            .orElseThrow(() -> new RuntimeException("Snippet not found"));
+
+        // Check if user owns the snippet by comparing IDs
+        if (!snippet.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You don't have permission to move this snippet");
+        }
+
+        // If folderId is null, remove from current folder
+        if (folderId == null) {
+            snippet.setFolder(null);
+        } else {
+            Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("Folder not found"));
+
+            // Check if user owns the folder by comparing IDs
+            if (!folder.getUser().getId().equals(user.getId())) {
+                throw new RuntimeException("You don't have permission to move to this folder");
+            }
+
+            snippet.setFolder(folder);
+        }
+
+        snippet.setLastModifiedDate(LocalDateTime.now());
+        Snippet savedSnippet = snippetRepository.save(snippet);
+        return snippetMapper.toDTO(savedSnippet);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SnippetDTO> getSnippetsByFolder(Long folderId, User user) {
+        Folder folder = folderRepository.findById(folderId)
+            .orElseThrow(() -> new RuntimeException("Folder not found"));
+
+        // Check if user owns the folder by comparing IDs
+        if (!folder.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You don't have permission to access this folder");
+        }
+
+        // If the folder is empty, return an empty list instead of throwing an error
+        if (folder.getSnippets() == null || folder.getSnippets().isEmpty()) {
+            return List.of();
+        }
+
+        return folder.getSnippets().stream()
+            .map(snippetMapper::toDTO)
+            .collect(Collectors.toList());
     }
 }

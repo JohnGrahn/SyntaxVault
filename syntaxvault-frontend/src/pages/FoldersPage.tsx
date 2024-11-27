@@ -7,17 +7,24 @@ import {
   Folder,
   setCurrentFolder,
 } from '../features/folders/foldersSlice';
+import {
+  fetchSnippetsByFolder,
+  moveSnippetToFolder,
+} from '../features/snippets/snippetsSlice';
 import FolderTree from '../components/Folders/FolderTree';
 import FolderForm from '../components/Folders/FolderForm';
 import FolderContextMenu from '../components/Folders/FolderContextMenu';
 import FolderBreadcrumb from '../components/Folders/FolderBreadcrumb';
+import SnippetCard from '../components/Snippets/SnippetCard';
 import Modal from '../components/Layout/Modal';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DragTypes } from '../constants/dragTypes';
 
 const FoldersPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { rootFolders, folders, currentFolder, loading, error } = useAppSelector((state) => state.folders);
+  const { rootFolders, folders, currentFolder, loading: foldersLoading, error: foldersError } = useAppSelector((state) => state.folders);
+  const { snippets, loading: snippetsLoading, error: snippetsError } = useAppSelector((state) => state.snippets);
   
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -37,6 +44,12 @@ const FoldersPage: React.FC = () => {
   useEffect(() => {
     dispatch(fetchFolders());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (currentFolder) {
+      dispatch(fetchSnippetsByFolder(currentFolder.id));
+    }
+  }, [dispatch, currentFolder]);
 
   const handleFolderSelect = (folder: Folder) => {
     dispatch(setCurrentFolder(folder));
@@ -75,31 +88,41 @@ const FoldersPage: React.FC = () => {
     }
   };
 
-  const handleFolderDrop = async (draggedId: number, targetId: number) => {
-    const draggedFolder = folders.find(f => f.id === draggedId);
-    const targetFolder = folders.find(f => f.id === targetId);
+  const handleFolderDrop = async (draggedId: number, targetId: number, type: string) => {
+    if (type === DragTypes.FOLDER) {
+      const draggedFolder = folders.find(f => f.id === draggedId);
+      const targetFolder = folders.find(f => f.id === targetId);
 
-    if (!draggedFolder || !targetFolder) return;
+      if (!draggedFolder || !targetFolder) return;
 
-    // Prevent dropping a folder into itself or its children
-    if (draggedFolder.path === targetFolder.path || targetFolder.path.startsWith(draggedFolder.path + '/')) {
-      return;
-    }
+      // Prevent dropping a folder into itself or its children
+      if (draggedFolder.path === targetFolder.path || targetFolder.path.startsWith(draggedFolder.path + '/')) {
+        return;
+      }
 
-    try {
-      await dispatch(updateFolder({
-        id: draggedId,
-        folderData: {
-          name: draggedFolder.name,
-          parentId: targetId
+      try {
+        await dispatch(updateFolder({
+          id: draggedId,
+          folderData: {
+            name: draggedFolder.name,
+            parentId: targetId
+          }
+        })).unwrap();
+
+        // Refresh folders after the move
+        dispatch(fetchFolders());
+      } catch (err) {
+        console.error('Failed to move folder:', err);
+      }
+    } else if (type === DragTypes.SNIPPET) {
+      try {
+        await dispatch(moveSnippetToFolder({ snippetId: draggedId, folderId: targetId })).unwrap();
+        if (currentFolder) {
+          dispatch(fetchSnippetsByFolder(currentFolder.id));
         }
-      })).unwrap();
-
-      // Refresh folders and update the view
-      await dispatch(fetchFolders()).unwrap();
-      dispatch(setCurrentFolder(targetFolder));
-    } catch (err) {
-      console.error('Failed to move folder:', err);
+      } catch (err) {
+        console.error('Failed to move snippet:', err);
+      }
     }
   };
 
@@ -107,12 +130,12 @@ const FoldersPage: React.FC = () => {
     setContextMenu({ show: false, x: 0, y: 0, folder: null });
   };
 
-  if (loading && !folders.length) {
+  if (foldersLoading && !folders.length) {
     return <div className="p-4">Loading folders...</div>;
   }
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
+  if (foldersError) {
+    return <div className="p-4 text-red-500">Error: {foldersError}</div>;
   }
 
   return (
@@ -134,7 +157,7 @@ const FoldersPage: React.FC = () => {
             selectedFolderId={currentFolder?.id || null}
             onFolderSelect={handleFolderSelect}
             onFolderContextMenu={handleFolderContextMenu}
-            onFolderDrop={handleFolderDrop}
+            onFolderDrop={(draggedId: number, targetId: number) => handleFolderDrop(draggedId, targetId, DragTypes.FOLDER)}
           />
         </div>
 
@@ -150,8 +173,28 @@ const FoldersPage: React.FC = () => {
                   if (folder) handleFolderSelect(folder);
                 }}
               />
-              {/* Add your snippet list or other content here */}
+              {snippetsLoading ? (
+                <div>Loading snippets...</div>
+              ) : snippetsError ? (
+                <div className="text-red-500">Error loading snippets: {snippetsError}</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {snippets.map((snippet) => (
+                    <SnippetCard key={snippet.id} snippet={snippet} />
+                  ))}
+                  {snippets.length === 0 && (
+                    <div className="text-gray-500">
+                      No snippets in this folder. Drag and drop snippets here to add them.
+                    </div>
+                  )}
+                </div>
+              )}
             </>
+          )}
+          {!currentFolder && (
+            <div className="text-center text-gray-500 mt-8">
+              Select a folder to view its snippets
+            </div>
           )}
         </div>
 
@@ -159,8 +202,8 @@ const FoldersPage: React.FC = () => {
         {showCreateForm && (
           <Modal 
             isOpen={showCreateForm}
-            title="Create New Folder"
             onClose={() => setShowCreateForm(false)}
+            title="Create New Folder"
           >
             <FolderForm
               parentId={selectedFolder?.id}
@@ -176,8 +219,8 @@ const FoldersPage: React.FC = () => {
         {showEditForm && selectedFolder && (
           <Modal 
             isOpen={showEditForm}
-            title="Edit Folder"
             onClose={() => setShowEditForm(false)}
+            title={`Edit Folder: ${selectedFolder.name}`}
           >
             <FolderForm
               folder={selectedFolder}

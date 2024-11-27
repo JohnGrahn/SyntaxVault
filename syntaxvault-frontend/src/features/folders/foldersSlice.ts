@@ -165,6 +165,28 @@ const foldersSlice = createSlice({
         if (state.currentFolder?.id === action.payload.id) {
           state.currentFolder = action.payload;
         }
+      })
+      .addCase(createFolder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createFolder.fulfilled, (state, action: PayloadAction<Folder>) => {
+        state.loading = false;
+        state.folders = [...state.folders, action.payload];
+        // Update rootFolders if the new folder is a root folder
+        if (action.payload.parentId === null) {
+          state.rootFolders = [...state.rootFolders, action.payload];
+        } else {
+          // Update parent folder's subfolders
+          const parentFolder = state.folders.find(f => f.id === action.payload.parentId);
+          if (parentFolder) {
+            parentFolder.subfolders = [...(parentFolder.subfolders || []), action.payload];
+          }
+        }
+      })
+      .addCase(createFolder.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

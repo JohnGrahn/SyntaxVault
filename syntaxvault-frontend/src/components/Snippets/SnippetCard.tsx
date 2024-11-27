@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { Snippet } from '../../types/types';
 import { Link } from 'react-router-dom';
 import Prism from '../../utils/prism';
+import { useDrag } from 'react-dnd';
+import { DragTypes } from '../../constants/dragTypes';
 
 interface SnippetCardProps {
   snippet: Snippet;
@@ -13,6 +15,18 @@ const SnippetCard: React.FC<SnippetCardProps> = ({ snippet, isPublic }) => {
     Prism.highlightAll();
   }, [snippet]);
 
+  const [{ isDragging }, drag] = useDrag({
+    type: DragTypes.SNIPPET,
+    item: { 
+      type: DragTypes.SNIPPET,
+      id: snippet.id,
+      folderId: snippet.folderId 
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
   const codePreview =
     snippet.content.length > 100 ? `${snippet.content.slice(0, 100)}...` : snippet.content;
 
@@ -21,7 +35,12 @@ const SnippetCard: React.FC<SnippetCardProps> = ({ snippet, isPublic }) => {
     : `/dashboard/snippets/${snippet.id}`;
 
   return (
-    <div className="border rounded-lg p-4 shadow hover:shadow-xl transition-shadow duration-300 flex flex-col">
+    <div 
+      ref={drag}
+      className={`border rounded-lg p-4 shadow hover:shadow-xl transition-shadow duration-300 flex flex-col ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+    >
       <Link to={linkPath} className="text-xl font-semibold text-blue-500 hover:underline">
         {snippet.title}
       </Link>
@@ -37,9 +56,14 @@ const SnippetCard: React.FC<SnippetCardProps> = ({ snippet, isPublic }) => {
         ))}
       </div>
       <div className="mt-4 text-sm text-gray-500">
-      <span>By: {snippet.username}</span>
-        <span>Created At: {new Date(snippet.creationDate).toLocaleString()}</span>
-        <span className="ml-4">Last Modified: {new Date(snippet.lastModifiedDate).toLocaleString()}</span>
+        <span>By: {snippet.username}</span>
+        <span className="ml-4">Created: {new Date(snippet.creationDate).toLocaleString()}</span>
+        <span className="ml-4">Modified: {new Date(snippet.lastModifiedDate).toLocaleString()}</span>
+        {snippet.folderId && (
+          <span className="ml-4">
+            Folder: {snippet.folderName}
+          </span>
+        )}
       </div>
     </div>
   );

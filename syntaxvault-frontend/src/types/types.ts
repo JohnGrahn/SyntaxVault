@@ -14,6 +14,8 @@ export interface Tag {
     username: string;
     tags: Tag[];
     isPublic: boolean;
+    folderId?: number;
+    folderName?: string;
   }
   
   export interface SnippetInput {

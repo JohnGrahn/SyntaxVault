@@ -20,6 +20,32 @@ const initialState: SnippetsState = {
   error: null,
 };
 
+// Move snippet to folder
+export const moveSnippetToFolder = createAsyncThunk(
+  'snippets/moveSnippetToFolder',
+  async ({ snippetId, folderId }: { snippetId: number; folderId: number | null }, thunkAPI) => {
+    try {
+      const response = await axios.put(`/api/snippets/${snippetId}/move`, { folderId });
+      return response.data as Snippet;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+// Fetch snippets by folder
+export const fetchSnippetsByFolder = createAsyncThunk(
+  'snippets/fetchSnippetsByFolder',
+  async (folderId: number, thunkAPI) => {
+    try {
+      const response = await axios.get(`/api/snippets/folder/${folderId}`);
+      return response.data as Snippet[];
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 // Modify fetchSnippets to accept filters
 export const fetchSnippets = createAsyncThunk(
   'snippets/fetchSnippets',
@@ -107,6 +133,37 @@ const snippetsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Move Snippet to Folder
+      .addCase(moveSnippetToFolder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(moveSnippetToFolder.fulfilled, (state, action: PayloadAction<Snippet>) => {
+        state.loading = false;
+        const index = state.snippets.findIndex(snippet => snippet.id === action.payload.id);
+        if (index !== -1) {
+          state.snippets[index] = action.payload;
+        }
+      })
+      .addCase(moveSnippetToFolder.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Fetch Snippets by Folder
+      .addCase(fetchSnippetsByFolder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSnippetsByFolder.fulfilled, (state, action: PayloadAction<Snippet[]>) => {
+        state.loading = false;
+        state.snippets = action.payload;
+      })
+      .addCase(fetchSnippetsByFolder.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       // Fetch Snippets
       .addCase(fetchSnippets.pending, (state) => {
         state.loading = true;

@@ -1,6 +1,6 @@
 package com.syntaxvault.controller;
 
-import com.syntaxvault.dto.LoginRequest;
+
 import com.syntaxvault.dto.RegisterRequest;
 import com.syntaxvault.service.UserService;
 import com.syntaxvault.util.JwtUtil;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { createFolder, updateFolder, Folder, FolderRequest } from '../../features/folders/foldersSlice';
+import { createFolder, updateFolder, Folder, FolderRequest, fetchFolders } from '../../features/folders/foldersSlice';
 
 interface FolderFormProps {
   folder?: Folder;
@@ -44,6 +44,7 @@ const FolderForm: React.FC<FolderFormProps> = ({ folder, parentId, onClose }) =>
           parentId: parentId === null ? undefined : parentId 
         };
         await dispatch(createFolder(folderRequest)).unwrap();
+        await dispatch(fetchFolders());
       }
       onClose();
     } catch (err: any) {

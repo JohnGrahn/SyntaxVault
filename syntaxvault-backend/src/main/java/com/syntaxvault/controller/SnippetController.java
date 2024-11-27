@@ -12,9 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import com.syntaxvault.mapper.SnippetMapper;
-import java.util.Set;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/snippets")
@@ -109,5 +108,35 @@ public class SnippetController {
         Optional<SnippetDTO> snippetDTO = snippetService.getPublicSnippetById(id);
         return snippetDTO.map(ResponseEntity::ok)
                         .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/move")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<SnippetDTO> moveSnippet(
+        @PathVariable Long id,
+        @RequestBody Map<String, Long> request,
+        Authentication authentication) {
+        
+        String username = authentication.getName();
+        User user = userService.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Long folderId = request.get("folderId");
+        SnippetDTO movedSnippet = snippetService.moveSnippet(id, folderId, user);
+        return ResponseEntity.ok(movedSnippet);
+    }
+
+    @GetMapping("/folder/{folderId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<SnippetDTO>> getSnippetsByFolder(
+        @PathVariable Long folderId,
+        Authentication authentication) {
+        
+        String username = authentication.getName();
+        User user = userService.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        List<SnippetDTO> snippets = snippetService.getSnippetsByFolder(folderId, user);
+        return ResponseEntity.ok(snippets);
     }
 }
